@@ -2,7 +2,6 @@ import random
 import flet as ft
 import time
 import math
-import keyboard
 import threading
 
 def get_category(effective_angle):
@@ -33,6 +32,9 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = "#FFF8E1"
 
+    # Hacemos focus para que la página reciba los eventos de teclado
+    page.focus = True
+
     # Letras válidas (excluyendo Ñ, X, Y, Z, Q)
     opciones = [letra for letra in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" if letra not in "ÑXYZQ"]
 
@@ -49,7 +51,8 @@ def main(page: ft.Page):
     ruleta = ft.Container(
         content=ft.Image(src="Rulete.png", width=400, height=400),
         rotate=ft.Rotate(angle=0),
-        width=400, height=400,
+        width=400, 
+        height=400,
         margin=0,
         padding=0,
     )
@@ -112,23 +115,6 @@ def main(page: ft.Page):
             tiempo_text.value = f"Tiempo: {segundos}s"
             page.update()
 
-    def on_key_press(e):
-        if e.name == "space":
-            girar_ruleta()
-            return
-        letra = e.name.upper()
-        if letra in colores:
-            for fila in letras_colores.controls:
-                for contenedor in fila.controls:
-                    if contenedor.content.value == letra:
-                        contenedor.content.value = ""  # ← Solo borramos el texto, no ocultamos el contenedor
-                        contenedor.bgcolor = "transparent" 
-                        contenedor.update()
-            page.update()
-
-
-    keyboard.on_press(on_key_press)
-
     def girar_ruleta():
         nonlocal timer_started
         duracion_total = random.uniform(4, 9)
@@ -156,6 +142,28 @@ def main(page: ft.Page):
         if not timer_started:
             timer_started = True
             threading.Thread(target=actualizar_tiempo, daemon=True).start()
+
+    # Función para manejar los eventos de teclado
+    def on_keyboard(e: ft.KeyboardEvent):
+        # Si se presiona la barra espaciadora, iniciamos el giro
+        if e.key == " ":
+            # Ejecutamos el giro en un hilo para evitar bloquear la interfaz
+            threading.Thread(target=girar_ruleta, daemon=True).start()
+        else:
+            # Comparamos la tecla presionada (convertida a mayúscula)
+            letra = e.key.upper()
+            if letra in colores:
+                for fila in letras_colores.controls:
+                    for contenedor in fila.controls:
+                        # Comprobamos si el contenedor contiene la letra presionada
+                        if contenedor.content.value == letra:
+                            contenedor.content.value = ""  # borramos el texto
+                            contenedor.bgcolor = "transparent"
+                            contenedor.update()
+                page.update()
+
+    # Asignamos el callback de teclado a la página
+    page.on_keyboard_event = on_keyboard
 
     ruleta_boton = ft.Column(
         controls=[flecha_img, ruleta],
@@ -234,4 +242,4 @@ def main(page: ft.Page):
     page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER) 
+    ft.app(target=main, view=ft.WEB_BROWSER)
