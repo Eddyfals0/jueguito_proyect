@@ -122,7 +122,7 @@ def main(page: ft.Page):
                 for contenedor in fila.controls:
                     if contenedor.content.value == letra:
                         contenedor.content.value = ""  # ← Solo borramos el texto, no ocultamos el contenedor
-                        contenedor.bgcolor = "transparent"  # Cambiamos el color de fondo a transparente
+                        contenedor.bgcolor = "transparent" 
                         contenedor.update()
             page.update()
 
@@ -234,4 +234,4 @@ def main(page: ft.Page):
     page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(target=main, view=ft.WEB_BROWSER) 
