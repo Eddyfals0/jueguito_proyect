@@ -30,15 +30,16 @@ def get_category(effective_angle):
 
 def main(page: ft.Page):
     page.title = "Ruleta"
-    page.theme_mode = ft.ThemeMode.LIGHT  # Se cambia a modo claro para ver bien los colores pastel
-    page.bgcolor = "#FFF8E1"  # Fondo general en tono crema claro
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.bgcolor = "#FFF8E1"
 
-    opciones = list("ABCDEFGHIJKLMNÑOPQRSTUVWXYZ")
+    # Letras válidas (excluyendo Ñ, X, Y, Z, Q)
+    opciones = [letra for letra in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" if letra not in "ÑXYZQ"]
 
     notification_text = ft.Text("Presiona espacio para girar la ruleta", color=ft.colors.BLACK, weight=ft.FontWeight.BOLD, size=22)
     notification_container = ft.Container(
         content=notification_text,
-        bgcolor="#BDB2FF",  # Fondo crema pastel
+        bgcolor="#BDB2FF",
         width=630,
         height=50,
         alignment=ft.alignment.center,
@@ -55,33 +56,42 @@ def main(page: ft.Page):
 
     flecha_img = ft.Image(src="flecha.png", width=70, height=70, fit="contain")
 
-    columnas = 7
     colores_pastel = ["#FFB3BA", "#FFDFBA", "#D8BFD8", "#BAFFC9", "#BAE1FF"]
-    # Se utiliza únicamente la paleta pastel para las letras.
     colores = {letra: random.choice(colores_pastel) for letra in opciones}
 
-    letras_colores = ft.Row(
-        controls=[ 
-            ft.Column(
+    # Reorganizar letras en una cuadrícula rectangular
+    filas = 4
+    columnas = math.ceil(len(opciones) / filas)
+
+    letras_colores = ft.Column(
+        controls=[
+            ft.Row(
                 controls=[
                     ft.Container(
-                        content=ft.Text(letra, color="black", weight=ft.FontWeight.BOLD, size=30),
-                        bgcolor=colores[letra],
+                        content=ft.Text(
+                            opciones[i * columnas + j],
+                            color="black",
+                            weight=ft.FontWeight.BOLD,
+                            size=30
+                        ),
+                        bgcolor=colores[opciones[i * columnas + j]],
                         width=80,
                         height=80,
                         alignment=ft.alignment.center,
                         border_radius=15
-                    ) for letra in opciones[i::columnas]
+                    )
+                    for j in range(columnas)
+                    if i * columnas + j < len(opciones)
                 ],
-                alignment=ft.MainAxisAlignment.START
-            ) for i in range(columnas)
-        ],
-        alignment=ft.MainAxisAlignment.START
+                alignment=ft.MainAxisAlignment.CENTER
+            )
+            for i in range(filas)
+        ]
     )
 
     puntaje_text = ft.Text(value="Puntaje: 0", color="black", font_family="Bold", size=17)
     tiempo_text = ft.Text(value="Tiempo: 0s", color="black", font_family="Bold", size=17)
-    
+
     categoria_ganadora_text = ft.Text(value="Ciencia y Tecnología", color="black", font_family="Bold", size=20)
     categoria_container = ft.Container(
         content=categoria_ganadora_text,
@@ -92,7 +102,6 @@ def main(page: ft.Page):
         border_radius=20
     )
 
-    # Bandera para iniciar el temporizador sólo una vez
     timer_started = False
 
     def actualizar_tiempo():
@@ -109,13 +118,14 @@ def main(page: ft.Page):
             return
         letra = e.name.upper()
         if letra in colores:
-            for columna in letras_colores.controls:
-                for contenedor in columna.controls:
+            for fila in letras_colores.controls:
+                for contenedor in fila.controls:
                     if contenedor.content.value == letra:
-                        contenedor.content.color = "red"
-                        contenedor.bgcolor = "transparent"
+                        contenedor.content.value = ""  # ← Solo borramos el texto, no ocultamos el contenedor
+                        contenedor.bgcolor = "transparent"  # Cambiamos el color de fondo a transparente
                         contenedor.update()
             page.update()
+
 
     keyboard.on_press(on_key_press)
 
@@ -124,16 +134,15 @@ def main(page: ft.Page):
         duracion_total = random.uniform(4, 9)
         tiempo_inicial = time.time()
         tiempo_transcurrido = 0
-        tiempo_inicio = 0.005  # Retardo inicial muy bajo para alta velocidad
-        tiempo_fin = random.uniform(0.05, 0.2)  # Retardo final aleatorio para la desaceleración
+        tiempo_inicio = 0.005
+        tiempo_fin = random.uniform(0.05, 0.2)
 
         while tiempo_transcurrido < duracion_total:
             progreso = tiempo_transcurrido / duracion_total
-            # Interpolación lineal entre el retardo inicial y el final
             tiempo_pausa = tiempo_inicio + progreso * (tiempo_fin - tiempo_inicio)
 
             incremento_total = math.radians(10)
-            pasos = 10 
+            pasos = 10
             for _ in range(pasos):
                 ruleta.rotate.angle += incremento_total / pasos
                 current_angle = math.degrees(ruleta.rotate.angle) % 360
@@ -144,17 +153,12 @@ def main(page: ft.Page):
                 time.sleep(tiempo_pausa / pasos)
             tiempo_transcurrido = time.time() - tiempo_inicial
 
-        # Inicia el temporizador solo después de la primera vez que se termina de girar la ruleta.
         if not timer_started:
             timer_started = True
             threading.Thread(target=actualizar_tiempo, daemon=True).start()
 
-
     ruleta_boton = ft.Column(
-        controls=[
-            flecha_img,
-            ruleta
-        ],
+        controls=[flecha_img, ruleta],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=0
     )
@@ -186,13 +190,10 @@ def main(page: ft.Page):
     )
 
     Parte2 = ft.Row(
-        controls=[
-            ruleta_boton,
-            letras_colores,
-        ],
+        controls=[ruleta_boton, letras_colores],
         alignment=ft.MainAxisAlignment.CENTER
     )
-    
+
     Parte3 = ft.Row(
         controls=[categoria_container],
         alignment=ft.MainAxisAlignment.CENTER
@@ -211,10 +212,6 @@ def main(page: ft.Page):
         expand=True,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
-
-    def on_button_click():
-        dialog.open = False
-        page.update()
 
     dialog = ft.AlertDialog(
         modal=True,
