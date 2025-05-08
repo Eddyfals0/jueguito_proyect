@@ -33,20 +33,34 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = "#FFF8E1"
 
-    # Definir rutas de assets y verificar existencia
-    assets_dir = "assets" if os.path.exists("assets") else "."
-    flecha_path = os.path.join(assets_dir, "flecha.png")
-    ruleta_path = os.path.join(assets_dir, "Rulete.png")
-    
-    # Verificar si existen los archivos
-    flecha_exists = os.path.exists(flecha_path)
-    ruleta_exists = os.path.exists(ruleta_path)
-    
+    # Imprimir información del entorno para depuración
     print(f"Directorio actual: {os.getcwd()}")
-    print(f"Directorio de assets: {assets_dir}")
-    print(f"Ruta de flecha: {flecha_path}, Existe: {flecha_exists}")
-    print(f"Ruta de ruleta: {ruleta_path}, Existe: {ruleta_exists}")
-
+    print(f"Contenido del directorio: {os.listdir('.')}")
+    
+    # Intentar encontrar las imágenes en diferentes ubicaciones
+    posibles_rutas_ruleta = ["Rulete.png", "./Rulete.png", "/Rulete.png", "assets/Rulete.png"]
+    posibles_rutas_flecha = ["flecha.png", "./flecha.png", "/flecha.png", "assets/flecha.png"]
+    
+    # Buscar la imagen de la ruleta
+    ruleta_path = None
+    for ruta in posibles_rutas_ruleta:
+        if os.path.exists(ruta):
+            ruleta_path = ruta
+            print(f"Encontrada ruleta en: {ruta}")
+            break
+    
+    if not ruleta_path:
+        print("No se encontró la imagen de la ruleta. Usando respaldo.")
+        ruleta_path = "Rulete.png"  # Usamos la ruta estándar como respaldo
+    
+    # Buscar la imagen de la flecha
+    flecha_path = None
+    for ruta in posibles_rutas_flecha:
+        if os.path.exists(ruta):
+            flecha_path = ruta
+            print(f"Encontrada flecha en: {ruta}")
+            break
+    
     # Hacemos focus para que la página reciba los eventos de teclado
     page.focus = True
 
@@ -89,7 +103,6 @@ def main(page: ft.Page):
         animate_opacity=300,
         margin=0,
         padding=0,
-        expand=True,
     )
 
     # Contenedor para la ruleta
@@ -126,7 +139,7 @@ def main(page: ft.Page):
     )
     
     # Intentar cargar la imagen pero usar la flecha dibujada como respaldo
-    if flecha_exists:
+    if flecha_path:
         try:
             flecha_container = ft.Container(
                 content=ft.Image(src=flecha_path, width=70, height=70, fit="contain"),
@@ -138,6 +151,7 @@ def main(page: ft.Page):
             print(f"Error al cargar la imagen de flecha: {e}")
             flecha_container = flecha_dibujada
     else:
+        print("No se encontró la imagen de flecha. Usando flecha dibujada.")
         flecha_container = flecha_dibujada
     
     colores_pastel = ["#FFB3BA", "#FFDFBA", "#D8BFD8", "#BAFFC9", "#BAE1FF"]
@@ -512,4 +526,4 @@ def main(page: ft.Page):
     page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER)
+    ft.app(target=main)
