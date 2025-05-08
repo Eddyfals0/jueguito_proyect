@@ -3,6 +3,7 @@ import flet as ft
 import time
 import math
 import threading
+import os
 
 def get_category(effective_angle):
     if 0 <= effective_angle < 36:
@@ -31,6 +32,20 @@ def main(page: ft.Page):
     page.title = "Ruleta"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = "#FFF8E1"
+
+    # Definir rutas de assets y verificar existencia
+    assets_dir = "assets" if os.path.exists("assets") else "."
+    flecha_path = os.path.join(assets_dir, "flecha.png")
+    ruleta_path = os.path.join(assets_dir, "Rulete.png")
+    
+    # Verificar si existen los archivos
+    flecha_exists = os.path.exists(flecha_path)
+    ruleta_exists = os.path.exists(ruleta_path)
+    
+    print(f"Directorio actual: {os.getcwd()}")
+    print(f"Directorio de assets: {assets_dir}")
+    print(f"Ruta de flecha: {flecha_path}, Existe: {flecha_exists}")
+    print(f"Ruta de ruleta: {ruleta_path}, Existe: {ruleta_exists}")
 
     # Hacemos focus para que la página reciba los eventos de teclado
     page.focus = True
@@ -69,13 +84,18 @@ def main(page: ft.Page):
         content=cuenta_regresiva_grande,
         expand=True,
         alignment=ft.alignment.center,
-        bgcolor=ft.colors.with_opacity(0.5, ft.colors.BLACK),  # Más transparente (0.5 en lugar de 0.8)
+        bgcolor=ft.colors.with_opacity(0.3, ft.colors.BLACK),  # Mucho más transparente (0.3 en lugar de 0.5)
         visible=False,  # Inicialmente oculto
         animate_opacity=300,
+        margin=0,
+        padding=0,
+        width=page.window_width,
+        height=page.window_height,
     )
 
+    # Contenedor para la ruleta
     ruleta = ft.Container(
-        content=ft.Image(src="Rulete.png", width=400, height=400),
+        content=ft.Image(src=ruleta_path, width=400, height=400),
         rotate=ft.Rotate(angle=0),
         width=400, 
         height=400,
@@ -83,8 +103,44 @@ def main(page: ft.Page):
         padding=0,
     )
 
-    flecha_img = ft.Image(src="flecha.png", width=70, height=70, fit="contain")
-
+    # Crear una flecha como respaldo usando formas en lugar de imagen
+    flecha_dibujada = ft.Stack(
+        controls=[
+            ft.Container(
+                width=70,
+                height=70,
+                bgcolor="#FF5252",  # Fondo rojo
+                border_radius=35,   # Círculo
+                alignment=ft.alignment.center,
+            ),
+            ft.Container(
+                content=ft.Icon(
+                    name=ft.icons.ARROW_DOWNWARD,
+                    size=40,
+                    color=ft.colors.WHITE
+                ),
+                alignment=ft.alignment.center,
+                width=70,
+                height=70,
+            )
+        ]
+    )
+    
+    # Intentar cargar la imagen pero usar la flecha dibujada como respaldo
+    if flecha_exists:
+        try:
+            flecha_container = ft.Container(
+                content=ft.Image(src=flecha_path, width=70, height=70, fit="contain"),
+                width=70,
+                height=70,
+                alignment=ft.alignment.center,
+            )
+        except Exception as e:
+            print(f"Error al cargar la imagen de flecha: {e}")
+            flecha_container = flecha_dibujada
+    else:
+        flecha_container = flecha_dibujada
+    
     colores_pastel = ["#FFB3BA", "#FFDFBA", "#D8BFD8", "#BAFFC9", "#BAE1FF"]
     colores = {letra: random.choice(colores_pastel) for letra in opciones}
     colores_originales = colores.copy()  # Guardar colores originales
@@ -374,7 +430,7 @@ def main(page: ft.Page):
     page.on_keyboard_event = on_keyboard
 
     ruleta_boton = ft.Column(
-        controls=[flecha_img, ruleta],
+        controls=[flecha_container, ruleta],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=0
     )
@@ -433,7 +489,9 @@ def main(page: ft.Page):
             ),
             overlay_container
         ],
-        expand=True
+        expand=True,
+        width=page.window_width,
+        height=page.window_height
     )
 
     dialog = ft.AlertDialog(
