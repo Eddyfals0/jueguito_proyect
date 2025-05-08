@@ -28,6 +28,44 @@ def get_category(effective_angle):
         return "Pensamiento lateral y creatividad"
     return ""
 
+# Función para crear la ruleta visual como respaldo
+def crear_ruleta_visual():
+    categorias = [
+        ("Historia", "#FF9AA2"),
+        ("Geografía", "#FFB347"),
+        ("Ciencia y Tecnología", "#FDFD96"),
+        ("Arte y Literatura", "#CFCFC4"),
+        ("Deportes", "#B5EAD7"),
+        ("Entretenimiento", "#C7CEEA"),
+        ("Filosofía", "#FFDAC1"),
+        ("Cultura Popular", "#E2F0CB"),
+        ("Matemáticas", "#B5D8EB"),
+        ("Creatividad", "#FCD1D1")
+    ]
+    
+    segmentos = []
+    angulo_inicial = 0
+    angulo_segmento = 36  # 360 / 10 categorías
+    
+    for i, (categoria, color) in enumerate(categorias):
+        segmento = ft.Container(
+            width=400,
+            height=400,
+            bgcolor=color,
+            border_radius=0,
+            rotate=ft.Rotate(angle=math.radians(angulo_inicial), alignment=ft.alignment.center),
+            clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+            padding=10,
+        )
+        segmentos.append(segmento)
+        angulo_inicial += angulo_segmento
+    
+    return ft.Stack(
+        width=400,
+        height=400,
+        controls=segmentos
+    )
+
 def main(page: ft.Page):
     page.title = "Ruleta"
     page.theme_mode = ft.ThemeMode.LIGHT
@@ -35,31 +73,29 @@ def main(page: ft.Page):
 
     # Imprimir información del entorno para depuración
     print(f"Directorio actual: {os.getcwd()}")
-    print(f"Contenido del directorio: {os.listdir('.')}")
+    try:
+        print(f"Contenido del directorio: {os.listdir('.')}")
+        if os.path.exists("assets"):
+            print(f"Contenido de assets: {os.listdir('assets')}")
+    except Exception as e:
+        print(f"No se pudo listar el directorio: {e}")
     
-    # Intentar encontrar las imágenes en diferentes ubicaciones
-    posibles_rutas_ruleta = ["Rulete.png", "./Rulete.png", "/Rulete.png", "assets/Rulete.png"]
-    posibles_rutas_flecha = ["flecha.png", "./flecha.png", "/flecha.png", "assets/flecha.png"]
+    # Determinar el entorno (local o Render)
+    es_render = os.environ.get("RENDER") == "true"
+    print(f"¿Ejecutando en Render? {es_render}")
     
-    # Buscar la imagen de la ruleta
-    ruleta_path = None
-    for ruta in posibles_rutas_ruleta:
-        if os.path.exists(ruta):
-            ruleta_path = ruta
-            print(f"Encontrada ruleta en: {ruta}")
-            break
-    
-    if not ruleta_path:
-        print("No se encontró la imagen de la ruleta. Usando respaldo.")
-        ruleta_path = "Rulete.png"  # Usamos la ruta estándar como respaldo
-    
-    # Buscar la imagen de la flecha
-    flecha_path = None
-    for ruta in posibles_rutas_flecha:
-        if os.path.exists(ruta):
-            flecha_path = ruta
-            print(f"Encontrada flecha en: {ruta}")
-            break
+    # Establecer rutas de imágenes según el entorno
+    if es_render:
+        # En Render, asumimos que los assets están en la raíz
+        ruleta_path = "Rulete.png"
+        flecha_path = "Flecha.png"
+    else:
+        # Localmente, usamos la carpeta assets
+        ruleta_path = "assets/Rulete.png"
+        flecha_path = "assets/Flecha.png"
+        
+    print(f"Ruta de la ruleta: {ruleta_path}")
+    print(f"Ruta de la flecha: {flecha_path}")
     
     # Hacemos focus para que la página reciba los eventos de teclado
     page.focus = True
@@ -105,7 +141,7 @@ def main(page: ft.Page):
         padding=0,
     )
 
-    # Contenedor para la ruleta
+    # Contenedor para la ruleta - simplificado sin verificaciones complejas
     ruleta = ft.Container(
         content=ft.Image(src=ruleta_path, width=400, height=400),
         rotate=ft.Rotate(angle=0),
@@ -115,45 +151,14 @@ def main(page: ft.Page):
         padding=0,
     )
 
-    # Crear una flecha como respaldo usando formas en lugar de imagen
-    flecha_dibujada = ft.Stack(
-        controls=[
-            ft.Container(
-                width=70,
-                height=70,
-                bgcolor="#FF5252",  # Fondo rojo
-                border_radius=35,   # Círculo
-                alignment=ft.alignment.center,
-            ),
-            ft.Container(
-                content=ft.Icon(
-                    name=ft.icons.ARROW_DOWNWARD,
-                    size=40,
-                    color=ft.colors.WHITE
-                ),
-                alignment=ft.alignment.center,
-                width=70,
-                height=70,
-            )
-        ]
+    # Crear flecha sencilla
+    flecha_container = ft.Container(
+        content=ft.Image(src=flecha_path, width=70, height=70, fit="contain"),
+        width=70,
+        height=70,
+        alignment=ft.alignment.center,
     )
-    
-    # Intentar cargar la imagen pero usar la flecha dibujada como respaldo
-    if flecha_path:
-        try:
-            flecha_container = ft.Container(
-                content=ft.Image(src=flecha_path, width=70, height=70, fit="contain"),
-                width=70,
-                height=70,
-                alignment=ft.alignment.center,
-            )
-        except Exception as e:
-            print(f"Error al cargar la imagen de flecha: {e}")
-            flecha_container = flecha_dibujada
-    else:
-        print("No se encontró la imagen de flecha. Usando flecha dibujada.")
-        flecha_container = flecha_dibujada
-    
+
     colores_pastel = ["#FFB3BA", "#FFDFBA", "#D8BFD8", "#BAFFC9", "#BAE1FF"]
     colores = {letra: random.choice(colores_pastel) for letra in opciones}
     colores_originales = colores.copy()  # Guardar colores originales
