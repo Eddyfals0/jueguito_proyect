@@ -48,6 +48,32 @@ def main(page: ft.Page):
         border_radius=ft.BorderRadius(top_left=0, top_right=0, bottom_left=20, bottom_right=20)
     )
 
+    # Contenedor para la cuenta regresiva grande
+    cuenta_regresiva_grande = ft.Container(
+        content=ft.Text(
+            "4",
+            size=300,
+            weight=ft.FontWeight.BOLD,
+            color=ft.colors.WHITE,  # Texto en blanco
+            text_align=ft.TextAlign.CENTER
+        ),
+        alignment=ft.alignment.center,
+        visible=False,
+        bgcolor=ft.colors.with_opacity(0.8, ft.colors.BLACK),  # Fondo negro semi-transparente
+        expand=True,  # Hacer que se expanda para llenar el espacio disponible
+        animate_opacity=300,
+    )
+
+    # Contenedor overlay para la cuenta regresiva
+    overlay_container = ft.Container(
+        content=cuenta_regresiva_grande,
+        expand=True,
+        alignment=ft.alignment.center,
+        bgcolor=ft.colors.with_opacity(0.5, ft.colors.BLACK),  # Más transparente (0.5 en lugar de 0.8)
+        visible=False,  # Inicialmente oculto
+        animate_opacity=300,
+    )
+
     ruleta = ft.Container(
         content=ft.Image(src="Rulete.png", width=400, height=400),
         rotate=ft.Rotate(angle=0),
@@ -61,10 +87,14 @@ def main(page: ft.Page):
 
     colores_pastel = ["#FFB3BA", "#FFDFBA", "#D8BFD8", "#BAFFC9", "#BAE1FF"]
     colores = {letra: random.choice(colores_pastel) for letra in opciones}
+    colores_originales = colores.copy()  # Guardar colores originales
 
     # Reorganizar letras en una cuadrícula rectangular
     filas = 4
     columnas = math.ceil(len(opciones) / filas)
+
+    # Contenedores de letras para acceso fácil
+    contenedores_letras = {}
 
     letras_colores = ft.Column(
         controls=[
@@ -92,8 +122,15 @@ def main(page: ft.Page):
         ]
     )
 
+    # Guardar referencia a cada contenedor por su letra
+    for fila in letras_colores.controls:
+        for contenedor in fila.controls:
+            letra = contenedor.content.value
+            if letra in opciones:
+                contenedores_letras[letra] = contenedor
+
     puntaje_text = ft.Text(value="Puntaje: 0", color="black", font_family="Bold", size=17)
-    tiempo_text = ft.Text(value="Tiempo: 0s", color="black", font_family="Bold", size=17)
+    tiempo_text = ft.Text(value="Tiempo: 40s", color="black", font_family="Bold", size=17)
 
     categoria_ganadora_text = ft.Text(value="Ciencia y Tecnología", color="black", font_family="Bold", size=20)
     categoria_container = ft.Container(
@@ -106,6 +143,160 @@ def main(page: ft.Page):
     )
 
     timer_started = False
+    seleccion_en_curso = False
+    letra_seleccionada = None
+    timer_thread = None
+    timer_activo = False  # Nueva variable para controlar si el timer está activo
+    
+    # Diálogo para tiempo agotado
+    dialogo_tiempo_agotado = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("¡Tiempo agotado!", size=20, weight=ft.FontWeight.BOLD),
+        content=ft.Text("El tiempo se ha acabado para esta ronda.", size=16),
+        actions=[
+            ft.TextButton("Aceptar", on_click=lambda e: setattr(dialogo_tiempo_agotado, "open", False) or page.update())
+        ],
+        shape=ft.RoundedRectangleBorder(radius=15),
+        content_padding=15
+    )
+
+    def mostrar_cuenta_regresiva():
+        # Espera inicial de 2 segundos
+        time.sleep(2)
+        
+        # Mostrar la letra seleccionada
+        cuenta_regresiva_grande.content.value = f"La letra es: {letra_seleccionada}"
+        cuenta_regresiva_grande.content.size = 100  # Tamaño más pequeño para el texto
+        overlay_container.visible = True
+        cuenta_regresiva_grande.visible = True
+        overlay_container.opacity = 1
+        cuenta_regresiva_grande.opacity = 1
+        page.update()
+        time.sleep(2)  # Mostrar por 2 segundos
+        
+        # Restaurar tamaño para números
+        cuenta_regresiva_grande.content.size = 300
+        
+        # Cuenta regresiva
+        for numero in range(4, 0, -1):
+            cuenta_regresiva_grande.content.value = str(numero)
+            overlay_container.visible = True
+            cuenta_regresiva_grande.visible = True
+            overlay_container.opacity = 1
+            cuenta_regresiva_grande.opacity = 1
+            page.update()
+            time.sleep(0.7)
+            overlay_container.opacity = 0
+            cuenta_regresiva_grande.opacity = 0
+            page.update()
+            time.sleep(0.3)
+        overlay_container.visible = False
+        cuenta_regresiva_grande.visible = False
+        page.update()
+
+    def temporizador_regresivo():
+        nonlocal timer_activo
+        
+        try:
+            # Mostrar cuenta regresiva grande
+            mostrar_cuenta_regresiva()
+            
+            # Cuenta regresiva desde 40 segundos
+            for segundos_restantes in range(40, -1, -1):
+                if not timer_activo:  # Si el timer fue cancelado, salir
+                    return
+                    
+                tiempo_text.value = f"Tiempo: {segundos_restantes}s"
+                page.update()
+                
+                # Si llegamos a cero, mostrar diálogo
+                if segundos_restantes == 0:
+                    page.dialog = dialogo_tiempo_agotado
+                    dialogo_tiempo_agotado.open = True
+                    page.update()
+                    break
+                    
+                time.sleep(1)
+        finally:
+            timer_activo = False  # Asegurarse de que el timer se marque como inactivo al terminar
+
+    def seleccionar_letra_aleatoria():
+        nonlocal seleccion_en_curso, letra_seleccionada, timer_thread, timer_activo
+        
+        if seleccion_en_curso:
+            return
+            
+        seleccion_en_curso = True
+        letras_disponibles = [letra for letra in opciones if contenedores_letras[letra].content.value]
+        
+        if not letras_disponibles:
+            seleccion_en_curso = False
+            return
+            
+        # Duración del ciclo de selección
+        duracion_total = random.uniform(2, 4)
+        tiempo_inicial = time.time()
+        tiempo_transcurrido = 0
+        
+        # Color de resaltado
+        color_resaltado = "#FF6B6B"
+        
+        indice_actual = 0
+        ultima_letra_resaltada = None
+        
+        # Tiempo entre cambios (empieza rápido y luego se ralentiza)
+        tiempo_cambio_inicial = 0.05
+        tiempo_cambio_final = 0.3
+        
+        try:
+            while tiempo_transcurrido < duracion_total:
+                # Restaurar color anterior si hay una letra resaltada
+                if ultima_letra_resaltada and ultima_letra_resaltada in contenedores_letras:
+                    contenedor = contenedores_letras[ultima_letra_resaltada]
+                    if contenedor.content.value:  # Si la letra aún está visible
+                        contenedor.bgcolor = colores[ultima_letra_resaltada]
+                
+                # Calcular el índice actual (circular)
+                indice_actual = indice_actual % len(letras_disponibles)
+                letra_actual = letras_disponibles[indice_actual]
+                
+                # Cambiar color de la letra actual
+                contenedor = contenedores_letras[letra_actual]
+                contenedor.bgcolor = color_resaltado
+                ultima_letra_resaltada = letra_actual
+                
+                # Actualizar la página
+                page.update()
+                
+                # Calcular tiempo de pausa para el próximo cambio
+                progreso = tiempo_transcurrido / duracion_total
+                factor = math.pow(progreso, 1.5)  # Desaceleración no lineal
+                tiempo_pausa = tiempo_cambio_inicial + factor * (tiempo_cambio_final - tiempo_cambio_inicial)
+                
+                # Pausa
+                time.sleep(tiempo_pausa)
+                
+                # Avanzar a la siguiente letra
+                indice_actual += 1
+                tiempo_transcurrido = time.time() - tiempo_inicial
+            
+            # Letra final seleccionada
+            if ultima_letra_resaltada:
+                letra_seleccionada = ultima_letra_resaltada
+                notification_text.value = f"Letra seleccionada: {letra_seleccionada}"
+                page.update()
+                
+                # Si hay un timer activo, cancelarlo
+                if timer_activo:
+                    timer_activo = False
+                    time.sleep(0.1)  # Dar tiempo para que el timer anterior se detenga
+                
+                # Iniciar nuevo timer
+                timer_activo = True
+                timer_thread = threading.Thread(target=temporizador_regresivo, daemon=True)
+                timer_thread.start()
+        finally:
+            seleccion_en_curso = False
 
     def actualizar_tiempo():
         segundos = 0
@@ -116,51 +307,68 @@ def main(page: ft.Page):
             page.update()
 
     def girar_ruleta():
-        nonlocal timer_started
         duracion_total = random.uniform(4, 9)
         tiempo_inicial = time.time()
         tiempo_transcurrido = 0
-        tiempo_inicio = 0.005
-        tiempo_fin = random.uniform(0.05, 0.2)
+        
+        # Configuración para que gire muy rápido al principio y luego desacelere
+        velocidad_inicial = 0.001  # Mucho más rápido al inicio
+        velocidad_final = 0.2
+        
+        angulo_por_paso_inicial = math.radians(30)  # Mayor ángulo por paso
+        angulo_por_paso_final = math.radians(5)
 
         while tiempo_transcurrido < duracion_total:
             progreso = tiempo_transcurrido / duracion_total
-            tiempo_pausa = tiempo_inicio + progreso * (tiempo_fin - tiempo_inicio)
-
-            incremento_total = math.radians(10)
-            pasos = 10
+            # Curva de desaceleración no lineal para efecto más realista
+            factor_desaceleracion = math.pow(progreso, 1.5)
+            
+            tiempo_pausa = velocidad_inicial + factor_desaceleracion * (velocidad_final - velocidad_inicial)
+            angulo_por_paso = angulo_por_paso_inicial + factor_desaceleracion * (angulo_por_paso_final - angulo_por_paso_inicial)
+            
+            # Aplicar giro con varios pasos pequeños
+            pasos = 5
             for _ in range(pasos):
-                ruleta.rotate.angle += incremento_total / pasos
+                ruleta.rotate.angle += angulo_por_paso / pasos
                 current_angle = math.degrees(ruleta.rotate.angle) % 360
                 effective_angle = (current_angle + 90) % 360
                 current_category = get_category(effective_angle)
                 categoria_ganadora_text.value = f"{current_category}"
                 page.update()
                 time.sleep(tiempo_pausa / pasos)
+                
             tiempo_transcurrido = time.time() - tiempo_inicial
 
-        if not timer_started:
-            timer_started = True
-            threading.Thread(target=actualizar_tiempo, daemon=True).start()
+    # Función para borrar la letra seleccionada
+    def borrar_letra_seleccionada():
+        nonlocal letra_seleccionada, timer_activo
+        
+        if letra_seleccionada and letra_seleccionada in contenedores_letras:
+            contenedor = contenedores_letras[letra_seleccionada]
+            contenedor.content.value = ""
+            contenedor.bgcolor = "transparent"
+            letra_seleccionada = None
+            
+            # Detener el temporizador si está activo
+            if timer_activo:
+                timer_activo = False
+                tiempo_text.value = "Tiempo: 40s"  # Resetear el tiempo mostrado
+                overlay_container.visible = False
+                cuenta_regresiva_grande.visible = False
+            
+            page.update()
 
     # Función para manejar los eventos de teclado
     def on_keyboard(e: ft.KeyboardEvent):
-        # Si se presiona la barra espaciadora, iniciamos el giro
         if e.key == " ":
             # Ejecutamos el giro en un hilo para evitar bloquear la interfaz
             threading.Thread(target=girar_ruleta, daemon=True).start()
-        else:
-            # Comparamos la tecla presionada (convertida a mayúscula)
-            letra = e.key.upper()
-            if letra in colores:
-                for fila in letras_colores.controls:
-                    for contenedor in fila.controls:
-                        # Comprobamos si el contenedor contiene la letra presionada
-                        if contenedor.content.value == letra:
-                            contenedor.content.value = ""  # borramos el texto
-                            contenedor.bgcolor = "transparent"
-                            contenedor.update()
-                page.update()
+        elif e.key == "Enter":
+            # Inicia la selección de letra aleatoria
+            threading.Thread(target=seleccionar_letra_aleatoria, daemon=True).start()
+        elif e.key == "Backspace":
+            # Borra la letra seleccionada
+            borrar_letra_seleccionada()
 
     # Asignamos el callback de teclado a la página
     page.on_keyboard_event = on_keyboard
@@ -207,18 +415,25 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER
     )
 
-    contenido_principal = ft.Column(
+    # Modificar el contenido principal para que sea responsive
+    contenido_principal = ft.Stack(
         controls=[
-            notification_container,
             ft.Column(
-                controls=[Parte1, Parte2, Parte3],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                expand=True
-            )
+                controls=[
+                    notification_container,
+                    ft.Column(
+                        controls=[Parte1, Parte2, Parte3],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        expand=True
+                    )
+                ],
+                expand=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            ),
+            overlay_container
         ],
-        expand=True,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        expand=True
     )
 
     dialog = ft.AlertDialog(
@@ -242,4 +457,4 @@ def main(page: ft.Page):
     page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER)
+    ft.app(target=main,)
