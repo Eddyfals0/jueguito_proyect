@@ -89,8 +89,7 @@ def main(page: ft.Page):
         animate_opacity=300,
         margin=0,
         padding=0,
-        width=page.window_width,
-        height=page.window_height,
+        expand=True,
     )
 
     # Contenedor para la ruleta
@@ -490,8 +489,6 @@ def main(page: ft.Page):
             overlay_container
         ],
         expand=True,
-        width=page.window_width,
-        height=page.window_height
     )
 
     dialog = ft.AlertDialog(
@@ -515,4 +512,4 @@ def main(page: ft.Page):
     page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main,)
+    ft.app(target=main, view=ft.WEB_BROWSER)
