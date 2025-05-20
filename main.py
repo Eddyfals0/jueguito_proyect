@@ -167,8 +167,8 @@ dialogo_bienvenida = ft.AlertDialog(
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            ft.Text("¡Que te diviertas!", size=24, weight=ft.FontWeight.BOLD, color="#FF6B6B"),
-                            ft.Text("Presiona cualquier botón para comenzar", size=18, italic=True, color="#666666")
+                            ft.Text("¡Que te diviertas!", size=24, weight=ft.FontWeight.BOLD, color=ft.Color("#FF6B6B")),
+                            ft.Text("Presiona cualquier botón para comenzar", size=18, italic=True, color=ft.Color("#666666"))
                         ],
                         spacing=10,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -192,7 +192,7 @@ dialogo_bienvenida = ft.AlertDialog(
 def main(page: ft.Page):
     page.title = "Ruleta"
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.bgcolor = "#FFF8E1"
+    page.bgcolor = ft.Color("#FFF8E1")
 
     # Mostrar diálogo de bienvenida al inicio
     page.dialog = dialogo_bienvenida
@@ -231,10 +231,10 @@ def main(page: ft.Page):
     # Letras válidas (excluyendo Ñ, X, Y, Z, Q)
     opciones = [letra for letra in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" if letra not in "ÑXYZQ"]
 
-    notification_text = ft.Text("Presiona espacio para girar la ruleta", color="#000000", weight=ft.FontWeight.BOLD, size=22)
+    notification_text = ft.Text("Presiona espacio para girar la ruleta", color=ft.Color("#000000"), weight=ft.FontWeight.BOLD, size=22)
     notification_container = ft.Container(
         content=notification_text,
-        bgcolor="#BDB2FF",
+        bgcolor=ft.Color("#BDB2FF"),
         width=630,
         height=50,
         alignment=ft.alignment.center,
@@ -247,12 +247,12 @@ def main(page: ft.Page):
             "4",
             size=300,
             weight=ft.FontWeight.BOLD,
-            color="#FFFFFF",
+            color=ft.Color("#FFFFFF"),
             text_align=ft.TextAlign.CENTER
         ),
         alignment=ft.alignment.center,
         visible=False,
-        bgcolor=ft.colors.with_opacity(0.8, "#000000"),
+        bgcolor=ft.colors.with_opacity(0.8, ft.Color("#000000")),
         expand=True,
         animate_opacity=300,
     )
@@ -287,7 +287,7 @@ def main(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
-    colores_pastel = ["#FFB3BA", "#FFDFBA", "#D8BFD8", "#BAFFC9", "#BAE1FF"]
+    colores_pastel = [ft.Color("#FFB3BA"), ft.Color("#FFDFBA"), ft.Color("#D8BFD8"), ft.Color("#BAFFC9"), ft.Color("#BAE1FF")]
     colores = {letra: random.choice(colores_pastel) for letra in opciones}
     colores_originales = colores.copy()  # Guardar colores originales
 
@@ -331,13 +331,13 @@ def main(page: ft.Page):
             if letra in opciones:
                 contenedores_letras[letra] = contenedor
 
-    puntaje_text = ft.Text(value="Puntaje: 0", color="#000000", weight=ft.FontWeight.BOLD, size=20)
-    tiempo_text = ft.Text(value="Tiempo: 40s", color="#000000", weight=ft.FontWeight.BOLD, size=20)
+    puntaje_text = ft.Text(value="Puntaje: 0", color=ft.Color("#000000"), weight=ft.FontWeight.BOLD, size=20)
+    tiempo_text = ft.Text(value="Tiempo: 40s", color=ft.Color("#000000"), weight=ft.FontWeight.BOLD, size=20)
 
-    categoria_ganadora_text = ft.Text(value="Ciencia y Tecnología", color="#000000", font_family="Bold", size=20)
+    categoria_ganadora_text = ft.Text(value="Ciencia y Tecnología", color=ft.Color("#000000"), font_family="Bold", size=20)
     categoria_container = ft.Container(
         content=categoria_ganadora_text,
-        bgcolor="#B5EAD7",
+        bgcolor=ft.Color("#B5EAD7"),
         width=630,
         height=50,
         alignment=ft.alignment.center,
@@ -345,10 +345,10 @@ def main(page: ft.Page):
     )
 
     # Contenedor para la subcategoría
-    subcategoria_text = ft.Text(value="", color="#000000", font_family="Bold", size=18)
+    subcategoria_text = ft.Text(value="", color=ft.Color("#000000"), font_family="Bold", size=18)
     subcategoria_container = ft.Container(
         content=subcategoria_text,
-        bgcolor="#FFDAC1",
+        bgcolor=ft.Color("#FFDAC1"),
         width=630,
         height=50,
         alignment=ft.alignment.center,
@@ -378,15 +378,15 @@ def main(page: ft.Page):
                         width=300
                     ),
                     ft.Container(
-                        content=ft.Text("0", size=40, weight=ft.FontWeight.BOLD, color="#FF6B6B"),
+                        content=ft.Text("0", size=40, weight=ft.FontWeight.BOLD, color=ft.Color("#FF6B6B")),
                         alignment=ft.alignment.center,
                         width=300
                     ),
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Text("¡Buen trabajo!", size=24, weight=ft.FontWeight.BOLD, color="#4CAF50"),
-                                ft.Text("Presiona cualquier botón para reiniciar", size=18, italic=True, color="#666666")
+                                ft.Text("¡Buen trabajo!", size=24, weight=ft.FontWeight.BOLD, color=ft.Color("#4CAF50")),
+                                ft.Text("Presiona cualquier botón para reiniciar", size=18, italic=True, color=ft.Color("#666666"))
                             ],
                             spacing=10,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -437,17 +437,22 @@ def main(page: ft.Page):
         
         # Reiniciar tiempo y puntaje
         tiempo_text.value = "Tiempo: 40s"
+        tiempo_text.color = ft.Color("#000000")
         puntaje_text.value = "Puntaje: 0"
+        puntaje_text.color = ft.Color("#000000")
         
         # Reiniciar ruleta
         ruleta.rotate.angle = 0
         
         # Reiniciar categoría y subcategoría
         categoria_ganadora_text.value = "Ciencia y Tecnología"
+        categoria_ganadora_text.color = ft.Color("#000000")
         subcategoria_text.value = ""
+        subcategoria_text.color = ft.Color("#000000")
         
         # Reiniciar notificación
         notification_text.value = "Presiona espacio para girar la ruleta"
+        notification_text.color = ft.Color("#000000")
         
         # Mostrar diálogo de bienvenida al reiniciar
         page.dialog = dialogo_bienvenida
@@ -603,7 +608,7 @@ def main(page: ft.Page):
                 if contenedor.content.value:  # Verificar que la letra aún está visible
                     letra_seleccionada = ultima_letra_resaltada
                     notification_text.value = f"Letra seleccionada: {letra_seleccionada}"
-                    notification_text.color = "#000000"
+                    notification_text.color = ft.Color("#000000")
                     page.update()
                     
                     # Iniciar timer solo si no está activo
@@ -625,15 +630,17 @@ def main(page: ft.Page):
             contenedor = contenedores_letras[letra_seleccionada]
             if contenedor.content.value:  # Verificar que la letra aún está visible
                 contenedor.content.value = ""
-                contenedor.bgcolor = "transparent"
+                contenedor.bgcolor = "transparent" # Mantener transparent, no es un color específico
                 
                 # Sumar un punto
                 try:
                     puntaje_actual = int(puntaje_text.value.split(": ")[1])
                     puntaje_text.value = f"Puntaje: {puntaje_actual + 1}"
+                    puntaje_text.color = ft.Color("#000000")
                 except Exception as e:
                     print(f"Error al actualizar el puntaje: {e}")
                     puntaje_text.value = "Puntaje: 1"
+                    puntaje_text.color = ft.Color("#000000")
                 
                 letra_seleccionada = None
                 page.update()
@@ -694,8 +701,8 @@ def main(page: ft.Page):
     Parte1 = ft.Row(
         controls=[
             ft.Container(
-                content=ft.Text("Categorías", color="black", font_family="Bold", size=20),
-                bgcolor="#A0C4FF",
+                content=ft.Text("Categorías", color=ft.Color("#000000"), font_family="Bold", size=20),
+                bgcolor=ft.Color("#A0C4FF"),
                 width=270,
                 height=40,
                 border_radius=20,
@@ -704,8 +711,8 @@ def main(page: ft.Page):
             ft.Container(
                 content=ft.Row(
                     controls=[
-                        ft.Container(content=puntaje_text, width=130, height=40, alignment=ft.alignment.center, bgcolor="#A0C4FF", border_radius=20),
-                        ft.Container(content=tiempo_text, width=130, height=40, alignment=ft.alignment.center, bgcolor="#A0C4FF", border_radius=20)
+                        ft.Container(content=puntaje_text, width=130, height=40, alignment=ft.alignment.center, bgcolor=ft.Color("#A0C4FF"), border_radius=20),
+                        ft.Container(content=tiempo_text, width=130, height=40, alignment=ft.alignment.center, bgcolor=ft.Color("#A0C4FF"), border_radius=20)
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_AROUND
                 ),
@@ -763,6 +770,9 @@ def main(page: ft.Page):
 # app = ft.app(target=main, view=ft.AppView.WEB)
 
 if __name__ == "__main__":
-    # Configurar la aplicación Flet para ejecutarse en modo escritorio por defecto
-    # Para modo web, se debería usar un servidor ASGI como Gunicorn
-    ft.app(target=main)
+    # Configurar la aplicación Flet para ejecutarse como una aplicación web
+    # Usar el puerto de la variable de entorno PORT si está disponible, de lo contrario usar 8080
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    print(f"Iniciando aplicación Flet en modo web en el puerto {port}")
+    ft.app(target=main, view=ft.AppView.WEB, port=port)
