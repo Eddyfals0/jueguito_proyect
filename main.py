@@ -758,12 +758,13 @@ def main(page: ft.Page):
     page.add(contenido_principal)
     page.update()
 
-app = ft.app(target=main, view=ft.AppView.WEB)
+# La instancia de la aplicación flet si es necesaria para servidores ASGI como Gunicorn
+# app = ft.app(target=main, view=ft.AppView.WEB)
 
 if __name__ == "__main__":
     # Configurar la aplicación Flet para ejecutarse como una aplicación web
     # Usar el puerto de la variable de entorno PORT si está disponible, de lo contrario usar 8080
     import os
     port = int(os.environ.get("PORT", 8080))
-    # No llamamos a ft.app aquí, Gunicorn lo hará usando la variable 'app'
-    print(f"Aplicación Flet iniciada en el puerto {port}")
+    print(f"Iniciando aplicación Flet en modo web en el puerto {port}")
+    ft.app(target=main, view=ft.AppView.WEB, port=port)
