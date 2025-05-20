@@ -231,7 +231,7 @@ def main(page: ft.Page):
     # Letras válidas (excluyendo Ñ, X, Y, Z, Q)
     opciones = [letra for letra in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" if letra not in "ÑXYZQ"]
 
-    notification_text = ft.Text("Presiona espacio para girar la ruleta", color=ft.colors.BLACK, weight=ft.FontWeight.BOLD, size=22)
+    notification_text = ft.Text("Presiona espacio para girar la ruleta", color="#000000", weight=ft.FontWeight.BOLD, size=22)
     notification_container = ft.Container(
         content=notification_text,
         bgcolor="#BDB2FF",
@@ -247,12 +247,12 @@ def main(page: ft.Page):
             "4",
             size=300,
             weight=ft.FontWeight.BOLD,
-            color=ft.colors.WHITE,
+            color="#FFFFFF",
             text_align=ft.TextAlign.CENTER
         ),
         alignment=ft.alignment.center,
         visible=False,
-        bgcolor=ft.colors.with_opacity(0.8, ft.colors.BLACK),
+        bgcolor=ft.colors.with_opacity(0.8, "#000000"),
         expand=True,
         animate_opacity=300,
     )
@@ -331,10 +331,10 @@ def main(page: ft.Page):
             if letra in opciones:
                 contenedores_letras[letra] = contenedor
 
-    puntaje_text = ft.Text(value="Puntaje: 0", color="black", weight=ft.FontWeight.BOLD, size=20)
-    tiempo_text = ft.Text(value="Tiempo: 40s", color="black", weight=ft.FontWeight.BOLD, size=20)
+    puntaje_text = ft.Text(value="Puntaje: 0", color="#000000", weight=ft.FontWeight.BOLD, size=20)
+    tiempo_text = ft.Text(value="Tiempo: 40s", color="#000000", weight=ft.FontWeight.BOLD, size=20)
 
-    categoria_ganadora_text = ft.Text(value="Ciencia y Tecnología", color="black", font_family="Bold", size=20)
+    categoria_ganadora_text = ft.Text(value="Ciencia y Tecnología", color="#000000", font_family="Bold", size=20)
     categoria_container = ft.Container(
         content=categoria_ganadora_text,
         bgcolor="#B5EAD7",
@@ -345,7 +345,7 @@ def main(page: ft.Page):
     )
 
     # Contenedor para la subcategoría
-    subcategoria_text = ft.Text(value="", color="black", font_family="Bold", size=18)
+    subcategoria_text = ft.Text(value="", color="#000000", font_family="Bold", size=18)
     subcategoria_container = ft.Container(
         content=subcategoria_text,
         bgcolor="#FFDAC1",
@@ -546,7 +546,7 @@ def main(page: ft.Page):
         tiempo_inicial = time.time()
         tiempo_transcurrido = 0
         
-        # Color de resaltado
+        # Color de resaltado (ya es hexadecimal)
         color_resaltado = "#FF6B6B"
         
         indice_actual = 0
@@ -603,6 +603,7 @@ def main(page: ft.Page):
                 if contenedor.content.value:  # Verificar que la letra aún está visible
                     letra_seleccionada = ultima_letra_resaltada
                     notification_text.value = f"Letra seleccionada: {letra_seleccionada}"
+                    notification_text.color = "#000000"
                     page.update()
                     
                     # Iniciar timer solo si no está activo
@@ -762,9 +763,6 @@ def main(page: ft.Page):
 # app = ft.app(target=main, view=ft.AppView.WEB)
 
 if __name__ == "__main__":
-    # Configurar la aplicación Flet para ejecutarse como una aplicación web
-    # Usar el puerto de la variable de entorno PORT si está disponible, de lo contrario usar 8080
-    import os
-    port = int(os.environ.get("PORT", 8080))
-    print(f"Iniciando aplicación Flet en modo web en el puerto {port}")
-    ft.app(target=main, view=ft.AppView.WEB, port=port)
+    # Configurar la aplicación Flet para ejecutarse en modo escritorio por defecto
+    # Para modo web, se debería usar un servidor ASGI como Gunicorn
+    ft.app(target=main)
