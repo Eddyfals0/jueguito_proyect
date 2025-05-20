@@ -759,4 +759,8 @@ def main(page: ft.Page):
     page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    # Configurar la aplicación Flet para ejecutarse como una aplicación web
+    # Usar el puerto de la variable de entorno PORT si está disponible, de lo contrario usar 8080
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    ft.app(target=main, view=ft.AppView.WEB, port=port)
