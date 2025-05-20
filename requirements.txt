@@ -1,4 +1,4 @@
-flet>=0.27.0
+flet==0.30.0
 keyboard
 flask>=2.0.0
 requests>=2.25.0
